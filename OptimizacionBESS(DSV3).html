@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+  
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/dist/chartjs-adapter-moment.min.js"></script>
+
+
+<style>
+/* Estilos mínimos para pestañas */
+.tab-content {
+    display: none;
+    padding: 20px 0;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    background: #f1f1f1;
+    border: none;
+    cursor: pointer;
+    margin-right: 5px;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.3s;
+}
+
+.tab-button.active {
+    background: #3498db;
+    color: white;
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimización BESS - Tarifa GDMTH</title>
+
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+            display: block;
+            margin: 20px auto;
+            width: 200px;
+            text-align: center;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 30px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 40px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .flex-item {
+            flex: 1;
+            min-width: 300px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e6f7ff;
+        }
+        .highlight {
+            background-color: #e6f7ff;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .badge-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .badge-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+        .badge-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted #3498db;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .summary-card {
+            background: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .summary-card h4 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+            margin: 10px 0;
+        }
+        .param-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .param-slider input[type="range"] {
+            flex: 1;
+        }
+        .param-slider-value {
+            min-width: 40px;
+            text-align: center;
+        }
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: #f1f1f1;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .tab-button.active {
+            background: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #3498db;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Optimización de Consumo Energético con BESS</h1>
+        <p>Esta herramienta calcula el tamaño óptimo de un sistema BESS para minimizar costos en tarifa GDMTH de CFE.</p>
+        
+        <div class="card">
+            <h2>Datos de Entrada</h2>
+
+            
+
+
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="tab-general">Generales</button>
+                    <button class="tab-button" data-tab="tab-consumo">Consumo</button>
+                    <button class="tab-button" data-tab="tab-tarifas">Tarifas</button>
+                    <button class="tab-button" data-tab="tab-bess">BESS</button>
+                </div>
+                
+                <div id="tab-general" class="tab-content active">
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <div class="form-group">
+                                <label for="carga-conectada">Carga Conectada (kW):</label>
+                                <input type="number" id="carga-conectada" value="5000">
+                            </div>
+                            <div class="form-group">
+                                <label for="demanda-contratada">Demanda Contratada (kW):</label>
+                                <input type="number" id="demanda-contratada" value="5000">
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <div class="form-group">
+                                <label for="multiplicador">Multiplicador:</label>
+                                <input type="number" id="multiplicador" value="2800">
+                            </div>
+                            <div class="form-group">
+                                <label for="factor-potencia">Factor de Potencia (%):</label>
+                                <input type="number" id="factor-potencia" value="91.95" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-consumo" class="tab-content">
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <div class="form-group">
+                                <label for="kwh-base">kWh Base:</label>
+                                <input type="number" id="kwh-base" value="314602">
+                            </div>
+                            <div class="form-group">
+                                <label for="kwh-intermedia">kWh Intermedia:</label>
+                                <input type="number" id="kwh-intermedia" value="638222">
+                            </div>
+                            <div class="form-group">
+                                <label for="kwh-punta">kWh Punta:</label>
+                                <input type="number" id="kwh-punta" value="63376">
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <div class="form-group">
+                                <label for="kw-punta">Demanda Punta (kWPunta) según CFE:</label>
+                                <input type="number" id="kw-punta" value="1943">
+                            </div>
+                            <div class="form-group">
+                                <label for="kw-max">Demanda Máxima (kWMax) según CFE:</label>
+                                <input type="number" id="kw-max" value="1980">
+                            </div>  
+                            <div class="form-group">
+                                <label for="kvarh">kVArh Reactivos:</label>
+                                <input type="number" id="kvarh" value="434543">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-tarifas" class="tab-content">
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <h3>Tarifas de Energía (MXN)</h3>
+                            <div class="form-group">
+                                <label for="cargo-fijo">Cargo Fijo:</label>
+                                <input type="number" id="cargo-fijo" value="245.25" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="energia-base">Energía Base (MXN/kWh):</label>
+                                <input type="number" id="energia-base" value="0.961" step="0.0001">
+                            </div>
+                            <div class="form-group">
+                                <label for="energia-intermedia">Energía Intermedia (MXN/kWh):</label>
+                                <input type="number" id="energia-intermedia" value="1.8833" step="0.0001">
+                            </div>
+                            <div class="form-group">
+                                <label for="energia-punta">Energía Punta (MXN/kWh):</label>
+                                <input type="number" id="energia-punta" value="2.1485" step="0.0001">
+                            </div>
+                        </div>
+                        
+                        <div class="flex-item">
+                            <h3>Tarifas Adicionales (MXN)</h3>
+                            <div class="form-group">
+                                <label for="distribucion">Distribución (MXN/kW):</label>
+                                <input type="number" id="distribucion" value="162.01" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="capacidad">Capacidad (MXN/kW):</label>
+                                <input type="number" id="capacidad" value="438.65" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="transmision">Transmisión (MXN/kWh):</label>
+                                <input type="number" id="transmision" value="0.1809" step="0.0001">
+                            </div>
+                            <div class="form-group">
+                                <label for="cenace">CENACE (MXN/kWh):</label>
+                                <input type="number" id="cenace" value="0.0065" step="0.0001">
+                            </div>
+                            <div class="form-group">
+                                <label for="scnmem">SCnMEM (MXN/kWh):</label>
+                                <input type="number" id="scnmem" value="0.0062" step="0.0001">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-bess" class="tab-content">
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <h3>Configuración BESS</h3>
+                            <div class="form-group">
+                                <label for="porcentaje-desplazamiento">% Energía Punta a Base:</label>
+                                <div class="param-slider">
+                                    <input type="range" id="porcentaje-desplazamiento-slider" min="0" max="100" value="70" step="5">
+                                    <span class="param-slider-value" id="porcentaje-desplazamiento-value">70</span>%
+                                    <input type="number" id="porcentaje-desplazamiento" min="0" max="100" value="70" step="5" class="parametro-bess" style="display: none;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dod-bess">Profundidad de Descarga (DoD %):</label>
+                                <div class="param-slider">
+                                    <input type="range" id="dod-bess-slider" min="50" max="90" value="80" step="5">
+                                    <span class="param-slider-value" id="dod-bess-value">80</span>%
+                                    <input type="number" id="dod-bess" min="50" max="90" value="80" step="5" class="parametro-bess" style="display: none;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="rendimiento-bess">Rendimiento BESS (%):</label>
+                                <div class="param-slider">
+                                    <input type="range" id="rendimiento-bess-slider" min="80" max="95" value="85" step="5">
+                                    <span class="param-slider-value" id="rendimiento-bess-value">85</span>%
+                                    <input type="number" id="rendimiento-bess" min="80" max="95" value="85" step="5" class="parametro-bess" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <h3>Parámetros Financieros</h3>
+                            <div class="form-group">
+                                <label for="costo-bess">Costo BESS (USD/kWh):</label>
+                                <input type="number" id="costo-bess" value="300" step="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="tipo-cambio">Tipo de Cambio (MXN/USD):</label>
+                                <input type="number" id="tipo-cambio" value="20" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="costo-instalacion">% Costos Instalación:</label>
+                                <input type="number" id="costo-instalacion" value="15" step="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="calcular-btn">Calcular Optimización</button>
+        </div>
+        
+        <div id="results" class="results" style="display: none;">
+            <div class="card">
+                <h2>Resultados de la Optimización</h2>
+                
+                <div class="flex-container">
+                    <div class="flex-item">
+                        <div class="summary-card">
+                            <h4>Configuración Recomendada</h4>
+                            <p><strong>Modelo BESS:</strong> <span id="modelo-bess"></span></p>
+                            <p><strong>Unidades requeridas:</strong> <span id="unidades-bess"></span></p>
+                            <div class="summary-value"><span id="bess-size-kw"></span> / <span id="bess-size-kwh"></span></div>
+                        </div>
+                    </div>
+                    <div class="flex-item">
+                        <div class="summary-card">
+                            <h4>Ahorro Anual Estimado</h4>
+                            <div class="summary-value"><span id="annual-savings"></span></div>
+                            <p><strong>Reducción de Demanda Punta:</strong> <span id="demand-reduction"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="highlight">
+                    <h3>Resumen de Ahorros</h3>
+                    <p>La implementación del sistema BESS de <span id="bess-size-summary"></span> permite:</p>
+                    <ul>
+                        <li>Reducir la demanda máxima en horas punta a <span id="final-demand-reduction"></span></li>
+                        <li>Disminuir el consumo de energía en horas punta en un <span id="reduction-percentage"></span>%</li>
+                        <li>Generar ahorros anuales estimados de <span id="final-annual-savings"></span></li>
+                        <li>Recuperación de la inversión estimada en <span id="payback-period"></span> años</li>
+                    </ul>
+                </div>
+                
+                <div class="flex-container">
+                    <div class="flex-item">
+                        <h3>Comparación de Costos Mensuales</h3>
+                        <table>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Sin BESS</th>
+                                <th>Con BESS</th>
+                                <th>Ahorro</th>
+                            </tr>
+                            <tr>
+                                <td>Cargo Fijo</td>
+                                <td id="cf-sin"></td>
+                                <td id="cf-con"></td>
+                                <td id="cf-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>Energía Base</td>
+                                <td id="eb-sin"></td>
+                                <td id="eb-con"></td>
+                                <td id="eb-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>Energía Intermedia</td>
+                                <td id="ei-sin"></td>
+                                <td id="ei-con"></td>
+                                <td id="ei-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>Energía Punta</td>
+                                <td id="ep-sin"></td>
+                                <td id="ep-con"></td>
+                                <td id="ep-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>Distribución</td>
+                                <td id="d-sin"></td>
+                                <td id="d-con"></td>
+                                <td id="d-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>Capacidad</td>
+                                <td id="c-sin"></td>
+                                <td id="c-con"></td>
+                                <td id="c-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>Transmisión</td>
+                                <td id="t-sin"></td>
+                                <td id="t-con"></td>
+                                <td id="t-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>CENACE</td>
+                                <td id="ce-sin"></td>
+                                <td id="ce-con"></td>
+                                <td id="ce-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td>SCnMEM</td>
+                                <td id="scnmem-sin"></td>
+                                <td id="scnmem-con"></td>
+                                <td id="scnmem-ahorro"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td id="total-sin"></td>
+                                <td id="total-con"></td>
+                                <td id="total-ahorro"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="flex-item">
+                        <h3>Detalles de Operación</h3>
+                        <p><strong>Estrategia de Carga/Descarga:</strong></p>
+                        <ul>
+                            <li>Cargar BESS durante horas base (tarifa más baja)</li>
+                            <li>Descargar BESS durante horas punta para evitar consumo de red</li>
+                            <li>Mantener carga mínima en fines de semana según patrón de consumo</li>
+                        </ul>
+                        <p><strong>Demanda Máxima:</strong></p>
+                        <ul>
+                            <li>Sin BESS: <span id="max-demand-sin"></span> kW</li>
+                            <li>Con BESS: <span id="max-demand-con"></span> kW</li>
+                        </ul>
+                        <p><strong>Consumo por Periodo:</strong></p>
+                        <ul>
+                            <li>Base: <span id="consumo-base"></span> kWh (original: <span id="consumo-base-orig"></span> kWh)</li>
+                            <li>Intermedia: <span id="consumo-intermedia"></span> kWh (original: <span id="consumo-intermedia-orig"></span> kWh)</li>
+                            <li>Punta: <span id="consumo-punta"></span> kWh (original: <span id="consumo-punta-orig"></span> kWh)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- INICIO GRÁFICAS SIMPLIFICADAS -->
+<div class="chart-box">
+  <h3>Programación de Operación - Verano</h3>
+  <canvas id="chartVerano" width="800" height="400"></canvas>
+</div>
+
+<div class="chart-box">
+  <h3>Programación de Operación - Invierno</h3>
+  <canvas id="chartInvierno" width="800" height="400"></canvas>
+</div>
+
+<style>
+  .chart-box {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+</style>
+<!-- FIN GRÁFICAS SIMPLIFICADAS -->
+
+
+                <div class="chart-container">
+    <canvas id="winterChart" width="800" height="400"></canvas>
+</div>
+                
+                <div class="card">
+                    <h3>Análisis Financiero</h3>
+                    <table>
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Valor</th>
+                        </tr>
+                        <tr>
+                            <td>Costo equipos BESS (USD)</td>
+                            <td id="costo-equipos-usd"></td>
+                        </tr>
+                        <tr>
+                            <td>Costo equipos BESS (MXN)</td>
+                            <td id="costo-equipos-mxn"></td>
+                        </tr>
+                        <tr>
+                            <td>Costos de instalación (<span id="porc-instalacion"></span>%)</td>
+                            <td id="costo-instalacion"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Inversión total</strong></td>
+                            <td id="inversion-total"></td>
+                        </tr>
+                        <tr>
+                            <td>Ahorro anual estimado</td>
+                            <td id="ahorro-anual"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Periodo de recuperación</strong></td>
+                            <td id="payback-period-detalle"></td>
+                        </tr>
+                    </table>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="payback-progress"></div>
+                    </div>
+                    <p>Proyección basada en los parámetros actuales. Los valores reales pueden variar según condiciones del mercado.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales para las instancias de gráficos
+        let summerChartInstance = null;
+        let winterChartInstance = null;
+        let isLoading = false;
+
+        // Función para abrir pestañas
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            const tabButtons = document.getElementsByClassName("tab-button");
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // Función para formatear moneda
+        function formatCurrency(value) {
+            if (isNaN(value)) return "$0.00";
+            return '$' + value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        // Función para obtener datos de entrada con validación
+        function getInputData() {
+    // Función de parseo mejorada con validación estricta
+    const parseInput = (id, min = 0, max = Infinity, defaultValue = 0) => {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.error(`Elemento con ID ${id} no encontrado`);
+            return defaultValue;
+        }
+        
+        const value = parseFloat(element.value);
+        if (isNaN(value)) {
+            console.warn(`Valor inválido en ${id}, usando valor por defecto: ${defaultValue}`);
+            return defaultValue;
+        }
+        
+        // Validación de rangos
+        if (value < min || value > max) {
+            console.warn(`Valor en ${id} fuera de rango (${min}-${max}), usando valor por defecto: ${defaultValue}`);
+            return defaultValue;
+        }
+        
+        return value;
+    };
+
+    // Configuración BESS con rangos específicos
+    const porcentajeDesplazamiento = parseInput('porcentaje-desplazamiento', 0, 100, 70) / 100;
+    const dod = parseInput('dod-bess', 50, 90, 80) / 100;
+    const rendimiento = parseInput('rendimiento-bess', 80, 95, 85) / 100;
+
+    // Parámetros financieros con valores mínimos realistas
+    const costoBESS = parseInput('costo-bess', 100, 1000, 300);
+    const tipoCambio = parseInput('tipo-cambio', 10, 30, 20);
+    const costoInstalacionPorc = parseInput('costo-instalacion', 0, 50, 15) / 100;
+
+    // Obtener datos con validaciones específicas
+    return {
+        // Datos generales
+        cargaConectada: parseInput('carga-conectada', 1, 100000, 5000),
+        demandaContratada: parseInput('demanda-contratada', 1, 100000, 5000),
+        multiplicador: parseInput('multiplicador', 1, 10000, 2800),
+        factorPotencia: parseInput('factor-potencia', 80, 100, 91.95) / 100,
+        
+        // Datos de consumo (valores mínimos = 0)
+        consumo: {
+            base: parseInput('kwh-base', 0, 1000000, 314602),
+            intermedia: parseInput('kwh-intermedia', 0, 1000000, 638222),
+            punta: parseInput('kwh-punta', 0, 1000000, 63376),
+            kwPunta: parseInput('kw-punta', 0, 10000, 1943),
+            kWMax: parseInput('kw-max', 0, 10000, 1980),
+            kvarh: parseInput('kvarh', 0, 1000000, 434543)
+        },
+        
+        // Tarifas (valores mínimos = 0)
+        tarifas: {
+            cargoFijo: parseInput('cargo-fijo', 0, 10000, 245.25),
+            energiaBase: parseInput('energia-base', 0, 10, 0.961),
+            energiaIntermedia: parseInput('energia-intermedia', 0, 10, 1.8833),
+            energiaPunta: parseInput('energia-punta', 0, 10, 2.1485),
+            distribucion: parseInput('distribucion', 0, 1000, 162.01),
+            capacidad: parseInput('capacidad', 0, 1000, 438.65),
+            transmision: parseInput('transmision', 0, 1, 0.1809),
+            cenace: parseInput('cenace', 0, 1, 0.0065),
+            scnmem: parseInput('scnmem', 0, 1, 0.0062)
+        },
+        
+        // Parámetros BESS
+        bessParams: {
+            porcentajeDesplazamiento,
+            dod,
+            rendimiento
+        },
+        
+        // Parámetros financieros
+        financialParams: {
+            costoBESS,
+            tipoCambio,
+            costoInstalacionPorc
+        }
+    };
+}
+
+        // Función para calcular costos sin BESS
+        function calculateCostsWithoutBESS(data, diasMes = 31) {
+            const consumo = data.consumo;
+            const tarifas = data.tarifas;
+            const totalEnergia = consumo.base + consumo.intermedia + consumo.punta;
+            const denominador = 24 * diasMes * 0.7; // Factor 0.7
+
+            const distribucionCalculada = Math.min(
+                consumo.kWMax, 
+                totalEnergia / denominador
+            );
+
+            const capacidadCalculada = Math.min(
+                consumo.kwPunta, 
+                totalEnergia / denominador
+            );
+
+            return {
+                cargoFijo: tarifas.cargoFijo,
+                energiaBase: consumo.base * tarifas.energiaBase,
+                energiaIntermedia: consumo.intermedia * tarifas.energiaIntermedia,
+                energiaPunta: consumo.punta * tarifas.energiaPunta,
+                distribucion: distribucionCalculada * tarifas.distribucion,
+                capacidad: capacidadCalculada * tarifas.capacidad,
+                transmision: totalEnergia * tarifas.transmision,
+                cenace: totalEnergia * tarifas.cenace,
+                scnmem: totalEnergia * tarifas.scnmem,
+                demandaMaxima: consumo.kWMax,
+                kvarh: consumo.kvarh,
+                distribucionCalculada,
+                capacidadCalculada
+            };
+        }
+
+
+
+
+// Añadir al inicio del archivo
+const HORAS_DESCARGA = 2; // 2:1 ratio kWh:kW
+const FACTOR_CARGA = 0.7; // Factor de carga estándar CFE
+const DIAS_MES_OPERACION = 25; // Días laborales
+
+
+
+    // Función para optimizar con BESS
+        function optimizeWithBESS(data, diasMes = 25) {
+    
+        // 1. Parámetros del BESS
+        // const porcentajeDesplazamiento = bessParams.porcentajeDesplazamiento;
+        //const dod = bessParams.dod;
+        //const rendimiento = bessParams.rendimiento;
+        const horasDescarga = 2; // Estándar comercial (2:1 ratio)
+
+
+
+         // 1. Inicialización de variables básicas
+        const consumo = data.consumo;
+        const tarifas = data.tarifas;
+        const bessParams = data.bessParams;
+        const { porcentajeDesplazamiento, dod, rendimiento } = bessParams;    
+
+        // 2. Cálculo de energía diaria
+        const energiaDiariaPunta = consumo.punta / diasMes;
+
+        // 3. Primera estimación de tamaño teórico (son límite físico)
+        const energiaDesplazadaInicial = energiaDiariaPunta * porcentajeDesplazamiento;
+        const bessSizeKWTeorico = Math.ceil(energiaDesplazadaInicial / HORAS_DESCARGA);
+        const bessSizeKWHTeorico = Math.ceil(
+        (bessSizeKWTeorico * HORAS_DESCARGA) / (dod * rendimiento)
+    );
+
+
+        function validarInputs(consumo, params) {
+        const errores = [];
+        if (consumo.punta <= 0) errores.push("Consumo punta debe ser positivo");
+        if (params.porcentajeDesplazamiento < 0 || params.porcentajeDesplazamiento > 1) {
+            errores.push("Porcentaje desplazamiento debe estar entre 0 y 1");
+        }
+        return errores.length ? errores : null;
+    }
+
+    const errores = validarInputs(consumo, bessParams);
+    if (errores) throw new Error(errores.join(", "));
+    
+    
+    
+    
+
+   
+    // 4. Ahora si calcular el límite físico con bessSizekWhTeorico ya declarado
+    const energiaDesplazadaDiaria = Math.min(
+        energiaDesplazadaInicial,
+        (bessSizeKWHTeorico * dod * rendimiento) / diasMes // ← CORRECTO
+    );
+
+    // 5. Recalcular tamaño final si hubo ajuste por límite físico
+    const bessSizeKWFinal = Math.ceil(energiaDesplazadaDiaria / HORAS_DESCARGA);
+    const bessSizeKWHFinal = Math.ceil(
+        (bessSizeKWFinal * HORAS_DESCARGA) / (dod * rendimiento)
+    );
+
+
+
+    // 3. Tamaño teórico del BESS
+   // const bessSizeKWTeorico = Math.max(
+   // Math.ceil(energiaDesplazadaDiaria / horasDescarga),
+   // energiaDesplazadaDiaria * 0.5 // Garantiza ratio 2:1 kWh:kW );
+   // const bessSizeKWHTeorico = Math.ceil((bessSizeKWTeorico * horasDescarga) / (dod * rendimiento));
+
+    // 4. Configuración comercial (250kW/500kWh y 500kW/1000kWh)
+    const modeloPequeño = { potencia: 250, capacidad: 500 };
+    const modeloGrande = { potencia: 500, capacidad: 1000 };
+
+
+
+
+
+
+    
+    let configComercial = [];
+    let potenciaComercial = 0;
+    let capacidadComercial = 0;
+    
+    // Cálculo de combinación óptima
+    const unidadesGrandes = Math.floor(bessSizeKWTeorico / modeloGrande.potencia);
+    const potenciaResidual = bessSizeKWTeorico % modeloGrande.potencia;
+    const unidadesPequeñas = Math.ceil(potenciaResidual / modeloPequeño.potencia);
+    
+    if (unidadesGrandes > 0) {
+        configComercial.push(`${unidadesGrandes} × ${modeloGrande.potencia}kW/${modeloGrande.capacidad}kWh`);
+        potenciaComercial += unidadesGrandes * modeloGrande.potencia;
+        capacidadComercial += unidadesGrandes * modeloGrande.capacidad;
+    }
+    
+    if (unidadesPequeñas > 0) {
+        configComercial.push(`${unidadesPequeñas} × ${modeloPequeño.potencia}kW/${modeloPequeño.capacidad}kWh`);
+        potenciaComercial += unidadesPequeñas * modeloPequeño.potencia;
+        capacidadComercial += unidadesPequeñas * modeloPequeño.capacidad;
+    }
+
+    // 5. Cálculo de energía realmente desplazada
+    const energiaDesplazadaReal = Math.min(
+        (potenciaComercial * horasDescarga * dod * rendimiento) * diasMes,
+        consumo.punta
+    );
+
+    // 6. Ajuste de consumos
+    const nuevoConsumoBase = consumo.base + energiaDesplazadaReal;
+    const nuevoConsumoPunta = Math.max(0, consumo.punta - energiaDesplazadaReal);
+    const totalEnergia = nuevoConsumoBase + consumo.intermedia + nuevoConsumoPunta;
+
+// Nueva validación añadida:
+if (energiaDesplazadaReal > consumo.punta) {
+    console.warn("Ajustando energía desplazada al consumo punta disponible");
+    energiaDesplazadaReal = consumo.punta * 0.99; // Margen de seguridad
+}
+
+
+    // 7. Cálculo de nueva demanda
+    // Versión más precisa:
+const nuevaDemandaPunta = Math.max(
+    0, 
+    consumo.kwPunta - (potenciaComercial * rendimiento)
+);
+    // 8. Cálculo de costos con BESS
+    const denominador = 24 * diasMes * 0.7;
+    const distribucionCalculada = Math.min(consumo.kWMax, totalEnergia / denominador);
+    const capacidadCalculada = Math.min(nuevaDemandaPunta, totalEnergia / denominador);
+
+    const costs = {
+        cargoFijo: tarifas.cargoFijo,
+        energiaBase: nuevoConsumoBase * tarifas.energiaBase,
+        energiaIntermedia: consumo.intermedia * tarifas.energiaIntermedia,
+        energiaPunta: nuevoConsumoPunta * tarifas.energiaPunta,
+        distribucion: distribucionCalculada * tarifas.distribucion,
+        capacidad: capacidadCalculada * tarifas.capacidad,
+        transmision: totalEnergia * tarifas.transmision,
+        cenace: totalEnergia * tarifas.cenace,
+        scnmem: totalEnergia * tarifas.scnmem,
+        distribucionCalculada,
+        capacidadCalculada
+    };
+
+    // 9. Cálculo de ahorros
+    const scenarioWithoutBESS = calculateCostsWithoutBESS(data);
+    const ahorroTotal = (
+        scenarioWithoutBESS.energiaBase + 
+        scenarioWithoutBESS.energiaIntermedia + 
+        scenarioWithoutBESS.energiaPunta + 
+        scenarioWithoutBESS.distribucion + 
+        scenarioWithoutBESS.capacidad + 
+        scenarioWithoutBESS.transmision + 
+        scenarioWithoutBESS.cenace +
+        scenarioWithoutBESS.scnmem
+    ) - (
+        costs.energiaBase + 
+        costs.energiaIntermedia + 
+        costs.energiaPunta + 
+        costs.distribucion + 
+        costs.capacidad + 
+        costs.transmision + 
+        costs.cenace +
+        costs.scnmem
+    );
+
+    // 10. Retorno de resultados COMPLETO
+    return {
+        bessSizeKW: potenciaComercial,
+        bessSizeKWH: capacidadComercial,
+        configComercial: configComercial.join(" + "),
+        consumo: {
+            base: nuevoConsumoBase,
+            intermedia: consumo.intermedia,
+            punta: nuevoConsumoPunta
+        },
+        demandaMaxima: nuevaDemandaPunta,
+        costs,
+        ahorroMensual: ahorroTotal,
+        operationSchedule: createOperationSchedule(potenciaComercial, capacidadComercial),
+        dod: dod,
+        rendimiento: rendimiento
+    };
+}
+
+        // Función para crear el horario de operación
+        function createOperationSchedule(bessSizeKW, bessSizeKWH) {
+            // Horario de verano (abril a octubre)
+            const summerWeekday = [
+                { time: '00:00', power: -bessSizeKW * 0.8 }, // Carga nocturna
+                { time: '06:00', power: bessSizeKW * 0.5 },  // Descarga parcial mañana
+                { time: '08:00', power: bessSizeKW * 0.3 },  // Descarga reducida
+                { time: '18:00', power: bessSizeKW * 0.8 },  // Aumento descarga previo a punta
+                { time: '20:00', power: bessSizeKW },        // Descarga máxima en punta
+                { time: '22:00', power: 0 },                 // Sin operación
+                { time: '24:00', power: 0 }
+            ];
+            
+            const summerSaturday = [
+                { time: '00:00', power: -bessSizeKW * 0.5 }, // Carga reducida
+                { time: '07:00', power: 0 },                 // Sin operación
+                { time: '24:00', power: 0 }
+            ];
+            
+            const summerSunday = [
+                { time: '00:00', power: -bessSizeKW * 0.3 }, // Carga mínima
+                { time: '19:00', power: 0 },                  // Sin operación
+                { time: '24:00', power: 0 }
+            ];
+            
+            // Horario de invierno (noviembre a marzo)
+            const winterWeekday = [
+                { time: '00:00', power: -bessSizeKW * 0.8 }, // Carga nocturna
+                { time: '06:00', power: bessSizeKW * 0.6 },  // Descarga parcial mañana
+                { time: '16:00', power: bessSizeKW * 0.4 },  // Descarga reducida
+                { time: '18:00', power: bessSizeKW },        // Descarga máxima en punta
+                { time: '22:00', power: 0 },                 // Sin operación
+                { time: '24:00', power: 0 }
+            ];
+            
+            const winterSaturday = [
+                { time: '00:00', power: -bessSizeKW * 0.5 }, // Carga reducida
+                { time: '08:00', power: 0 },                 // Sin operación hasta tarde
+                { time: '19:00', power: bessSizeKW * 0.7 }, // Descarga por corto periodo
+                { time: '21:00', power: 0 },                 // Sin operación
+                { time: '24:00', power: 0 }
+            ];
+            
+            const winterSunday = [
+                { time: '00:00', power: -bessSizeKW * 0.3 }, // Carga mínima
+                { time: '18:00', power: 0 },                  // Sin operación
+                { time: '24:00', power: 0 }
+            ];
+            
+            return {
+                summer: {
+                    weekday: summerWeekday,
+                    saturday: summerSaturday,
+                    sunday: summerSunday
+                },
+                winter: {
+                    weekday: winterWeekday,
+                    saturday: winterSaturday,
+                    sunday: winterSunday
+                }
+            };
+        }
+
+        // Función para calcular el periodo de recuperación
+        function calcularPayback(capacidadKWh, ahorroAnualMXN, costoUSDkWh, tipoCambio, costoExtraPorcentaje) {
+            // Cálculos detallados
+            const costoTotalUSD = capacidadKWh * costoUSDkWh;
+            const costoTotalMXN = costoTotalUSD * tipoCambio;
+            const costosExtras = costoTotalMXN * (costoExtraPorcentaje / 100);
+            const inversionTotal = costoTotalMXN + costosExtras;
+            const paybackAños = (inversionTotal / ahorroAnualMXN);
+            
+            return {
+                añosBasico: (costoTotalMXN / ahorroAnualMXN).toFixed(1),
+                añosAjustado: paybackAños.toFixed(1),
+                inversionTotal: inversionTotal,
+                costosDesglose: {
+                    equiposUSD: costoTotalUSD,
+                    equiposMXN: costoTotalMXN,
+                    instalacion: costosExtras
+                },
+                porcentajeCompletado: Math.min(100, (ahorroAnualMXN / (inversionTotal / 10))) // Para la barra de progreso
+            };
+        }
+
+        // Función para mostrar resultados
+        function displayResults(scenarioWithoutBESS, optimizationResults, inputData) {
+    // 1. Función helper para actualización segura
+    const safeUpdate = (id, value, isCurrency = false) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = isCurrency ? formatCurrency(value) : value;
+        } else {
+            console.warn(`Elemento no encontrado: ${id}`);
+        }
+    };
+
+    // 2. Mostrar sección de resultados
+    const resultsContainer = document.getElementById('results');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'block';
+    } else {
+        console.error('Contenedor de resultados no encontrado');
+        return;
+    }
+
+    // 3. Tamaño del BESS
+    safeUpdate('bess-size-kw', `${optimizationResults.bessSizeKW} kW`);
+    safeUpdate('bess-size-kwh', `${optimizationResults.bessSizeKWH} kWh`);
+    safeUpdate('bess-size-summary', `${optimizationResults.bessSizeKW} kW / ${optimizationResults.bessSizeKWH} kWh`);
+
+    // 4. Cálculo de ahorros
+    const ahorroAnual = optimizationResults.ahorroMensual * 12;
+    safeUpdate('annual-savings', ahorroAnual, true);
+    safeUpdate('final-annual-savings', ahorroAnual, true);
+    safeUpdate('ahorro-anual', ahorroAnual, true);
+
+    // 5. Reducción de demanda
+    const reduccionDemanda = scenarioWithoutBESS.demandaMaxima - optimizationResults.demandaMaxima;
+    const porcentajeReduccion = (reduccionDemanda / scenarioWithoutBESS.demandaMaxima * 100).toFixed(1);
+    safeUpdate('demand-reduction', `${reduccionDemanda.toFixed(0)} kW (${porcentajeReduccion}%)`);
+    safeUpdate('final-demand-reduction', `${optimizationResults.demandaMaxima.toFixed(0)} kW (reducción del ${porcentajeReduccion}%)`);
+
+    // 6. Consumo energético
+    safeUpdate('consumo-base', optimizationResults.consumo.base.toFixed(0));
+    safeUpdate('consumo-base-orig', inputData.consumo.base.toFixed(0));
+    safeUpdate('consumo-intermedia', optimizationResults.consumo.intermedia.toFixed(0));
+    safeUpdate('consumo-intermedia-orig', inputData.consumo.intermedia.toFixed(0));
+    safeUpdate('consumo-punta', optimizationResults.consumo.punta.toFixed(0));
+    safeUpdate('consumo-punta-orig', inputData.consumo.punta.toFixed(0));
+
+    // 7. Demanda máxima
+    safeUpdate('max-demand-sin', scenarioWithoutBESS.demandaMaxima.toFixed(0));
+    safeUpdate('max-demand-con', optimizationResults.demandaMaxima.toFixed(0));
+    // safeUpdate('capacidad-calculada', (optimizationResults.costs.capacidadCalculada || 0).toFixed(2));
+
+    // 8. Reducción porcentual
+    const reduccionConsumoPunta = ((inputData.consumo.punta - optimizationResults.consumo.punta) / inputData.consumo.punta * 100).toFixed(1);
+    safeUpdate('reduction-percentage', reduccionConsumoPunta);
+
+    // 9. Configuración comercial BESS
+    const modeloGrande = { potencia: 500, capacidad: 1000 };
+    const modeloMediano = { potencia: 250, capacidad: 500 };
+    
+    const unidadesGrandes = Math.floor(optimizationResults.bessSizeKW / modeloGrande.potencia);
+    const potenciaRestante = optimizationResults.bessSizeKW % modeloGrande.potencia;
+    const unidadesMedianas = Math.ceil(potenciaRestante / modeloMediano.potencia);
+    const capacidadCalculada = (unidadesGrandes * modeloGrande.capacidad) + (unidadesMedianas * modeloMediano.capacidad);
+
+    safeUpdate('modelo-bess', `${optimizationResults.bessSizeKW} kW / ${capacidadCalculada} kWh`);
+    safeUpdate('unidades-bess', 
+        `${unidadesGrandes} x ${modeloGrande.potencia}kW/${modeloGrande.capacidad}kWh` + 
+        (unidadesMedianas > 0 ? ` + ${unidadesMedianas} x ${modeloMediano.potencia}kW/${modeloMediano.capacidad}kWh` : ""));
+
+    // 10. Cálculo de payback
+    const payback = calcularPayback(
+        optimizationResults.bessSizeKWH,
+        ahorroAnual,
+        inputData.financialParams.costoBESS,
+        inputData.financialParams.tipoCambio,
+        inputData.financialParams.costoInstalacionPorc * 100
+    );
+
+    safeUpdate('payback-period', `${payback.añosAjustado} años`);
+    safeUpdate('payback-period-detalle', `${payback.añosAjustado} años (${payback.añosBasico} sin costos de instalación)`);
+    safeUpdate('inversion-total', payback.inversionTotal, true);
+    safeUpdate('costo-equipos-usd', payback.costosDesglose.equiposUSD, true);
+    safeUpdate('costo-equipos-mxn', payback.costosDesglose.equiposMXN, true);
+    safeUpdate('costo-instalacion', payback.costosDesglose.instalacion, true);
+    safeUpdate('porc-instalacion', (inputData.financialParams.costoInstalacionPorc * 100));
+
+    // 11. Barra de progreso (manejo especial)
+    const progressBar = document.getElementById('payback-progress');
+    if (progressBar) {
+        progressBar.style.width = `${payback.porcentajeCompletado}%`;
+        progressBar.textContent = `${payback.porcentajeCompletado.toFixed(1)}%`;
+    }
+
+    // 12. Tabla comparativa de costos
+    const updateCostRow = (prefix, valueSin, valueCon) => {
+        safeUpdate(`${prefix}-sin`, valueSin, true);
+        safeUpdate(`${prefix}-con`, valueCon, true);
+        safeUpdate(`${prefix}-ahorro`, valueSin - valueCon, true);
+    };
+
+    updateCostRow('cf', scenarioWithoutBESS.cargoFijo, optimizationResults.costs.cargoFijo);
+    updateCostRow('eb', scenarioWithoutBESS.energiaBase, optimizationResults.costs.energiaBase);
+    updateCostRow('ei', scenarioWithoutBESS.energiaIntermedia, optimizationResults.costs.energiaIntermedia);
+    updateCostRow('ep', scenarioWithoutBESS.energiaPunta, optimizationResults.costs.energiaPunta);
+    updateCostRow('d', scenarioWithoutBESS.distribucion, optimizationResults.costs.distribucion);
+    updateCostRow('c', scenarioWithoutBESS.capacidad, optimizationResults.costs.capacidad);
+    updateCostRow('t', scenarioWithoutBESS.transmision, optimizationResults.costs.transmision);
+    updateCostRow('ce', scenarioWithoutBESS.cenace, optimizationResults.costs.cenace);
+    updateCostRow('scnmem', scenarioWithoutBESS.scnmem, optimizationResults.costs.scnmem);
+
+    // 13. Totales
+    const totalSinBESS = Object.values(scenarioWithoutBESS).reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
+    const totalConBESS = Object.values(optimizationResults.costs).reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
+    
+    safeUpdate('total-sin', totalSinBESS, true);
+    safeUpdate('total-con', totalConBESS, true);
+    safeUpdate('total-ahorro', totalSinBESS - totalConBESS, true);
+}
+
+        // Función para crear datasets para los gráficos
+        function createDatasets(schedule, dayType) {
+            const points = schedule[dayType];
+            const data = [];
+            
+            for (let i = 0; i < points.length - 1; i++) {
+                const startTime = points[i].time;
+                const endTime = points[i + 1].time;
+                const value = points[i].power;
+                
+                data.push({
+                    x: moment(startTime, 'HH:mm').toDate(),
+                    y: value
+                });
+                
+                // Agregar punto justo antes del siguiente cambio para crear escalón
+                data.push({
+                    x: moment(endTime, 'HH:mm').subtract(1, 'second').toDate(),
+                    y: value
+                });
+            }
+            
+            // Agregar último punto
+            const lastPoint = points[points.length - 1];
+            data.push({
+                x: moment(lastPoint.time, 'HH:mm').toDate(),
+                y: lastPoint.power
+            });
+            
+            return data;
+        }
+
+        // Función auxiliar para configuración de datasets
+        function createDatasetConfig(label, schedule, color) {
+    // Verificar datos de entrada
+    if (!Array.isArray(schedule)) {
+        console.error(`Datos inválidos para ${label}:`, schedule);
+        return { label, data: [], borderColor: color };
+    }
+
+    // Crear datos para el gráfico
+    const data = [];
+    for (let i = 0; i < schedule.length - 1; i++) {
+        const startTime = schedule[i].time;
+        const endTime = schedule[i + 1].time;
+        const value = schedule[i].power;
+        
+        data.push({
+            x: moment(startTime, 'HH:mm').toDate(),
+            y: value
+        });
+        
+        // Punto antes del siguiente cambio
+        data.push({
+            x: moment(endTime, 'HH:mm').subtract(1, 'second').toDate(),
+            y: value
+        });
+    }
+    
+    // Último punto
+    if (schedule.length > 0) {
+        const lastPoint = schedule[schedule.length - 1];
+        data.push({
+            x: moment(lastPoint.time, 'HH:mm').toDate(),
+            y: lastPoint.power
+        });
+    }
+
+    return {
+        label: label,
+        data: data,
+        borderColor: color,
+        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.2)'),
+        borderWidth: 2,
+        tension: 0.1,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 5
+    };
+}
+
+        // Función para crear gráficos
+    // Variables globales para las gráficas
+// let summerChartInstance = null;  //Estaban repetidos
+//let winterChartInstance = null;  //Estaban repetidos
+
+function createCharts(operationSchedule, bessSizeKW) {
+    // 1. Validaciones originales MEJORADAS
+    if (!operationSchedule || typeof bessSizeKW !== 'number' || bessSizeKW <= 0) {
+        console.error('Datos inválidos para gráficas:', {operationSchedule, bessSizeKW});
+        return;
+    }
+
+    // 2. Verificación física de los canvas (NUEVO)
+    const summerCanvas = document.getElementById('summerChart');
+    const winterCanvas = document.getElementById('winterChart');
+    
+    if (!summerCanvas || !winterCanvas) {
+        console.error("Canvas no encontrados en el DOM");
+        return;
+    }
+
+    // 3. Forzar dimensiones físicas (NUEVO)
+    summerCanvas.width = summerCanvas.offsetWidth;
+    summerCanvas.height = summerCanvas.offsetHeight;
+    winterCanvas.width = winterCanvas.offsetWidth;
+    winterCanvas.height = winterCanvas.offsetHeight;
+
+    // 4. Destrucción segura de gráficos anteriores (TU VERSIÓN MEJORADA)
+    const destroyChart = (chartInstance) => {
+        if (chartInstance && typeof chartInstance.destroy === 'function') {
+            chartInstance.destroy();
+        }
+    };
+    destroyChart(summerChartInstance);
+    destroyChart(winterChartInstance);
+
+    // 5. Configuración común (TU VERSIÓN ORIGINAL SIN CAMBIOS)
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
+        scales: {
+            x: {
+                type: 'time',
+                time: {
+                    unit: 'hour',
+                    displayFormats: { hour: 'HH:mm' },
+                    tooltipFormat: 'HH:mm'
+                },
+                title: {
+                    display: true,
+                    text: 'Hora del día'
+                },
+                grid: {
+                    display: true
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Potencia (kW)'
+                },
+                min: -bessSizeKW * 1.2,
+                max: bessSizeKW * 1.2,
+                ticks: {
+                    stepSize: bessSizeKW / 5
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    boxWidth: 12
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.dataset.label}: ${Math.abs(context.parsed.y).toFixed(1)} kW`;
+                    }
+                }
+            }
+        }
+    };
+
+    // 6. Renderizado con manejo de errores (MEJORADO)
+    try {
+        // Gráfico de verano
+        if (summerCanvas) {
+            summerChartInstance = new Chart(summerCanvas.getContext('2d'), {
+                type: 'line',
+                data: transformData(operationSchedule.summer),
+                options: commonOptions
+            });
+        }
+
+        // Gráfico de invierno
+        if (winterCanvas) {
+            winterChartInstance = new Chart(winterCanvas.getContext('2d'), {
+                type: 'line',
+                data: transformData(operationSchedule.winter),
+                options: commonOptions
+            });
+        }
+    } catch (error) {
+        console.error('Error al renderizar gráficas:', error);
+    }
+}
+
+// Función auxiliar para transformar datos (NUEVA)
+function transformData(seasonData) {
+    return {
+        datasets: [
+            createDataset('Día Laboral', seasonData.weekday, '#4BC0C0'),
+            createDataset('Sábado', seasonData.saturday, '#9966FF'),
+            createDataset('Domingo', seasonData.sunday, '#FF9F40')
+        ]
+    };
+}
+
+// Función auxiliar para crear datasets (NUEVA)
+function createDataset(label, dataPoints, color) {
+    return {
+        label,
+        data: dataPoints.map(point => ({
+            x: moment(point.time, 'HH:mm').toDate(),
+            y: point.power
+        })),
+        borderColor: color,
+        backgroundColor: `${color}33`,
+        borderWidth: 2,
+        tension: 0.1,
+        fill: true
+    };
+}
+
+// Función auxiliar para convertir colores
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function createDataset(label, dataPoints, color) {
+    return {
+        label,
+        data: dataPoints.map(point => ({
+            x: moment(point.time, 'HH:mm').toDate(),
+            y: point.power
+        })),
+        borderColor: color,
+        backgroundColor: `${color}33`,
+        borderWidth: 2,
+        fill: true
+    };
+}
+
+        function validarDatosIniciales(inputData) {
+    const errores = [];
+    
+    // Validación de consumos
+    if(inputData.consumo.punta <= 0) {
+        errores.push("El consumo en horas punta debe ser mayor que cero");
+    }
+    
+    // Validación de porcentajes (0-100)
+    if(inputData.bessParams.porcentajeDesplazamiento <= 0 || inputData.bessParams.porcentajeDesplazamiento > 1) {
+        errores.push("El porcentaje de desplazamiento debe estar entre 1% y 100%");
+    }
+    
+    // Validación de tarifas
+    if(inputData.tarifas.energiaPunta <= inputData.tarifas.energiaIntermedia) {
+        errores.push("La tarifa punta debe ser mayor que la tarifa intermedia");
+    }
+    
+    if(errores.length > 0) {
+        alert("ERRORES EN DATOS INICIALES:\n\n" + errores.join("\n"));
+        return false;
+    }
+    
+    return true;
+}
+
+
+
+
+
+        // Función principal de cálculo
+        async function calcularOptimizacion() {
+    try {
+        // 1. Obtener y validar datos
+        const inputData = getInputData();
+        if(!validarDatosIniciales(inputData)) return;
+        
+        // 2. Calcular escenarios
+        const scenarioWithoutBESS = calculateCostsWithoutBESS(inputData);
+        const optimizationResults = optimizeWithBESS(inputData);
+        
+        // 3. Validar resultados
+        if(!optimizationResults || !scenarioWithoutBESS) {
+            throw new Error("Error en los cálculos internos");
+        }
+        
+        // 4. Mostrar resultados
+        displayResults(scenarioWithoutBESS, optimizationResults, inputData);
+        
+    } catch(error) {
+        console.error("Error detallado:", error);
+        alert(`Error crítico: ${error.message}\n\nRevisa los datos ingresados.`);
+    }
+}
+
+        // Configurar listeners para los sliders
+        function configurarSliders() {
+            const sliders = [
+                { sliderId: 'porcentaje-desplazamiento-slider', valueId: 'porcentaje-desplazamiento-value', inputId: 'porcentaje-desplazamiento' },
+                { sliderId: 'dod-bess-slider', valueId: 'dod-bess-value', inputId: 'dod-bess' },
+                { sliderId: 'rendimiento-bess-slider', valueId: 'rendimiento-bess-value', inputId: 'rendimiento-bess' }
+            ];
+            
+            sliders.forEach(({sliderId, valueId, inputId}) => {
+                const slider = document.getElementById(sliderId);
+                const valueDisplay = document.getElementById(valueId);
+                const hiddenInput = document.getElementById(inputId);
+                
+                if (slider && valueDisplay && hiddenInput) {
+                    // Actualizar al mover el slider
+                    slider.addEventListener('input', function() {
+                        valueDisplay.textContent = this.value;
+                        hiddenInput.value = this.value;
+                        calcularOptimizacion();
+                    });
+                    
+                    // Actualizar al cambiar el input numérico
+                    hiddenInput.addEventListener('change', function() {
+                        slider.value = this.value;
+                        valueDisplay.textContent = this.value;
+                        calcularOptimizacion();
+                    });
+                    
+                    // Inicializar valores
+                    valueDisplay.textContent = slider.value;
+                    hiddenInput.value = slider.value;
+                }
+            });
+        }
+
+        // Configurar listeners para los inputs
+        function configurarInputListeners() {
+            const inputs = document.querySelectorAll('input:not(.parametro-bess)');
+            inputs.forEach(input => {
+                input.addEventListener('change', calcularOptimizacion);
+            });
+        }
+
+        // Inicializar la aplicación
+        function init() {
+            configurarSliders();
+            configurarInputListeners();
+            document.getElementById('calcular-btn').addEventListener('click', calcularOptimizacion);
+            
+            // Calcular al cargar la página
+            setTimeout(calcularOptimizacion, 500);
+        }
+
+        // Iniciar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+<script>
+// Versión mejorada para tu estructura específica
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Verificación inicial
+    if (tabButtons.length === 0 || tabContents.length === 0) {
+        console.error('No se encontraron pestañas');
+        return;
+    }
+    
+    // Función para cambiar pestañas
+    function switchTab(clickedButton) {
+        const tabId = clickedButton.getAttribute('data-tab');
+        
+        // Desactivar todos
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Activar los seleccionados
+        clickedButton.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+    
+    // Event listeners
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            switchTab(this);
+        });
+    });
+    
+    console.log('Sistema de pestañas inicializado correctamente');
+});
+</script>
+
+<script>
+// Versión ultra-compatible
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Selección segura de elementos
+        const buttons = document.querySelectorAll('.tab-button');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        // Verificación
+        if(buttons.length === 0 || contents.length === 0) {
+            console.warn('Elementos de pestañas no encontrados');
+            return;
+        }
+        
+        // Función para cambiar pestañas
+        const switchTab = (targetTab) => {
+            // Validación
+            if(!targetTab) return;
+            
+            // Desactivar todo
+            buttons.forEach(btn => btn.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Activar elementos objetivo
+            const tabContent = document.getElementById(targetTab);
+            if(tabContent) tabContent.classList.add('active');
+        };
+        
+        // Event listeners
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                this.classList.add('active');
+                switchTab(targetTab);
+            });
+        });
+        
+ //       console.log('Sistema de pestañas listo');  // Eliminado por estar duplicado
+        
+    } catch (error) {
+        console.error('Error en pestañas:', error);
+    }
+});
+</script>
+
+<script>
+// ========== GRÁFICAS DE EMERGENCIA ========== //
+function mostrarGraficasEscalon() {
+  // Datos de EJEMPLO (adaptalos a tus valores reales)
+  const datosReales = {
+    verano: {
+      horas: ['8:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+      potencia: [0, 150, 150, 80, 80, 180, 180, 0] // Valores repetidos para el efecto escalón
+    },
+    invierno: {
+      horas: ['7:00', '9:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'],
+      potencia: [0, 100, 100, 60, 60, 160, 160, 0] // Valores repetidos para el efecto escalón
+    }
+  };
+
+  // Configuración común para gráficas de escalón
+  const configEscalon = {
+    type: 'line',
+    data: {},
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: false }
+      },
+      elements: {
+        line: {
+          tension: 0 // ¡IMPORTANTE! Esto quita las curvas
+        }
+      }
+    }
+  };
+
+  // Gráfico de Verano (Escalón)
+  const ctxVerano = document.getElementById('chartVerano');
+  if (ctxVerano) {
+    new Chart(ctxVerano.getContext('2d'), {
+      ...configEscalon,
+      data: {
+        labels: datosReales.verano.horas,
+        datasets: [{
+          label: 'Potencia (kW) - Verano',
+          data: datosReales.verano.potencia,
+          borderColor: '#3498db',
+          backgroundColor: 'rgba(52, 152, 219, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          stepped: true // ¡Esta línea crea el efecto escalón!
+        }]
+      }
+    });
+  }
+
+  // Gráfico de Invierno (Escalón)
+  const ctxInvierno = document.getElementById('chartInvierno');
+  if (ctxInvierno) {
+    new Chart(ctxInvierno.getContext('2d'), {
+      ...configEscalon,
+      data: {
+        labels: datosReales.invierno.horas,
+        datasets: [{
+          label: 'Potencia (kW) - Invierno',
+          data: datosReales.invierno.potencia,
+          borderColor: '#e74c3c',
+          backgroundColor: 'rgba(231, 76, 60, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          stepped: 'before' // Alternativa: 'after' o 'middle'
+        }]
+      }
+    });
+  }
+}
+
+// Cambia esta línea al final del script (usa el nuevo nombre de función):
+window.addEventListener('load', mostrarGraficasEscalon);
+
+
+</script>
+
+
+</body>
+</html>
