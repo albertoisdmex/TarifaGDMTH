@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Tarifa CFE GDMTH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            color: #4b5563;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #4b5563;
+        }
+        .btn-secondary:hover {
+            background-color: #1f2937;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .results-item {
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .results-item-label {
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .results-item-value {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #111827;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Simulador de Tarifa CFE GDMTH y BESS</h1>
+            <p class="text-gray-600 mt-2">Calcula tu factura, simula ahorros con sistemas de almacenamiento y analiza tus costos de energía.</p>
+        </header>
+
+        <!-- SECCIÓN 1: DATOS DE TARIFAS -->
+        <div class="card">
+            <h2>1. Precios Unitarios de la Tarifa</h2>
+            <p class="text-gray-600 mb-4">Ingresa los costos de la tarifa GDMTH. Puedes guardar esta información para usarla después.</p>
+            <form id="tarifaForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="input-group"><label for="Anio_">Año</label><input type="number" id="Anio_" value="2025"></div>
+                <div class="input-group"><label for="Mes_">Mes</label><input type="text" id="Mes_" value="julio"></div>
+                <div class="input-group"><label for="Edo_">Estado</label><input type="text" id="Edo_" value="Jalisco"></div>
+                <div class="input-group"><label for="Mpo_">Municipio</label><input type="text" id="Mpo_" value="Atotonilco"></div>
+                <div class="input-group"><label for="Divi_">División</label><input type="text" id="Divi_" value="Centro Occidente"></div>
+                <div class="input-group"><label for="CF_">Cargo Fijo ($)</label><input type="number" step="any" id="CF_" value="245.25"></div>
+                <div class="input-group"><label for="CkWhB_">Energía Base ($/kWh)</label><input type="number" step="any" id="CkWhB_" value="0.9610"></div>
+                <div class="input-group"><label for="CkWhI_">Energía Intermedia ($/kWh)</label><input type="number" step="any" id="CkWhI_" value="1.8833"></div>
+                <div class="input-group"><label for="CkWhP_">Energía Punta ($/kWh)</label><input type="number" step="any" id="CkWhP_" value="2.1485"></div>
+                <div class="input-group"><label for="CkWD_">Potencia Distribución ($/kW)</label><input type="number" step="any" id="CkWD_" value="162.01"></div>
+                <div class="input-group"><label for="CkWC_">Potencia Capacidad ($/kW)</label><input type="number" step="any" id="CkWC_" value="438.65"></div>
+                <div class="input-group"><label for="CENACE_">CENACE ($/kWh)</label><input type="number" step="any" id="CENACE_" value="0.0065"></div>
+                <div class="input-group"><label for="CkWhT_">Transmisión ($/kWh)</label><input type="number" step="any" id="CkWhT_" value="0.1809"></div>
+                <div class="input-group"><label for="SCNMEM_">SCnMEM ($/kWh)</label><input type="number" step="any" id="SCNMEM_" value="0.0062"></div>
+                <div class="input-group"><label for="FC_">Factor de Carga (0-1)</label><input type="number" step="any" id="FC_" value="0.6898"></div>
+            </form>
+            <button id="saveTarifaBtn" class="btn btn-secondary mt-4">Guardar Tarifa</button>
+            
+            <h3 class="mt-6">Historial de Tarifas Guardadas</h3>
+            <div class="overflow-x-auto">
+                <table id="tarifaHistoryTable" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Año</th>
+                            <th>Mes</th>
+                            <th>Estado</th>
+                            <th>Municipio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Filas se agregarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: DATOS DE CONSUMO DE LA FACTURA -->
+        <div class="card">
+            <h2>2. Datos de Consumo de la Factura</h2>
+            <form id="consumoForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="input-group"><label for="kWhB_">Consumo Energía Base (kWh)</label><input type="number" step="any" id="kWhB_" value="314602"></div>
+                <div class="input-group"><label for="kWhI_">Consumo Energía Intermedia (kWh)</label><input type="number" step="any" id="kWhI_" value="638222"></div>
+                <div class="input-group"><label for="kWhP_">Consumo Energía Punta (kWh)</label><input type="number" step="any" id="kWhP_" value="63376"></div>
+                <div class="input-group"><label for="kWB_">Demanda Potencia Base (kW)</label><input type="number" step="any" id="kWB_" value="1877"></div>
+                <div class="input-group"><label for="kWI_">Demanda Potencia Intermedia (kW)</label><input type="number" step="any" id="kWI_" value="1980"></div>
+                <div class="input-group"><label for="kWP_">Demanda Potencia Punta (kW)</label><input type="number" step="any" id="kWP_" value="1943"></div>
+                <div class="input-group"><label for="kWMax_">Demanda Máxima Mensual (kW)</label><input type="number" step="any" id="kWMax_" value="1980"></div>
+                <div class="input-group"><label for="kVArh_">Energía Reactiva (kVArh)</label><input type="number" step="any"id="kVArh_" value="434543"></div>
+                <div class="input-group"><label for="FP_">Factor de Potencia (%)</label><input type="number" step="any" id="FP_" value="91.95"></div>
+            </form>
+        </div>
+        
+        <div class="flex justify-center mb-6">
+            <button id="calculateBtn" class="btn btn-primary text-lg">Calcular Factura Actual y Simular con BESS</button>
+        </div>
+
+        <!-- SECCIÓN DE RESULTADOS (se mostrará después del cálculo) -->
+        <div id="resultsSection" class="hidden">
+            <!-- FACTURA ACTUAL -->
+            <div class="card">
+                <h2>Resultados: Factura Actual (Sin BESS)</h2>
+                <div id="facturaActualResults">
+                    <!-- Los resultados se inyectarán aquí -->
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                    <div class="chart-container"><canvas id="consumoChart"></canvas></div>
+                    <div class="chart-container"><canvas id="demandaChart"></canvas></div>
+                    <div class="chart-container"><canvas id="costosChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: SIMULACIÓN BESS -->
+            <div class="card">
+                <h2>3. Simulación y Optimización con BESS</h2>
+                <p class="text-gray-600 mb-4">Ajusta los parámetros para simular cómo un BESS puede reducir tus costos al mover consumo del horario punta al base.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="input-group">
+                        <label for="peakShiftPercent">% de Energía Punta a Mover</label>
+                        <input type="number" id="peakShiftPercent" value="90" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="dodBess">Profundidad de Descarga (DoD %)</label>
+                        <input type="number" id="dodBess" value="90" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="efficiencyBess">Eficiencia del BESS (% ida y vuelta)</label>
+                        <input type="number" id="efficiencyBess" value="85" min="0" max="100">
+                    </div>
+                     <div class="input-group">
+                        <label for="dischargeHours">Horas de Descarga en Punta</label>
+                        <input type="number" id="dischargeHours" value="2" min="1" max="10">
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <button id="recalculateBessBtn" class="btn btn-primary">Recalcular Simulación con Nuevos Parámetros</button>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4, 5, 6 y 7: RESULTADOS SIMULACIÓN -->
+            <div class="card">
+                <h2>Resultados: Factura Simulada (Con BESS) y Comparativa</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Columna Izquierda: Factura Simulada -->
+                    <div>
+                        <h3>Nueva Factura (Simulada)</h3>
+                        <div id="facturaSimuladaResults"></div>
+                    </div>
+                    <!-- Columna Derecha: Comparativa y ROI -->
+                    <div>
+                        <h3>Análisis Comparativo y de Inversión</h3>
+                        <div id="comparativaResults" class="space-y-4"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                    <div class="chart-container"><canvas id="costosSimuladosChart"></canvas></div>
+                    <div class="chart-container"><canvas id="comparativaAhorrosChart"></canvas></div>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN 8: DIAGRAMAS DE OPERACIÓN -->
+            <div class="card">
+                <h2>8. Diagrama de Operación Semanal del BESS</h2>
+                <p class="text-gray-600 mb-4">Visualización del perfil de consumo diario con el BESS cargando en horas base y descargando en horas punta.</p>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                    <div class="chart-container"><canvas id="operacionVeranoChart"></canvas></div>
+                    <div class="chart-container"><canvas id="operacionInviernoChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 9: GENERACIÓN DE REPORTE -->
+            <div id="reportSection" class="card text-center hidden">
+                <h2>9. Generar Reporte</h2>
+                <p class="text-gray-600 mb-4">Genera un documento con el resumen de la simulación para presentarlo o guardarlo.</p>
+                <button id="generateReportBtn" class="btn btn-primary">Descargar Reporte (.doc)</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Chart instances
+        let consumoChart, demandaChart, costosChart, costosSimuladosChart, comparativaAhorrosChart, operacionVeranoChart, operacionInviernoChart;
+        // Global variable to hold the latest results for the report
+        let latestResults = {};
+
+        // Helper para formatear a moneda
+        const formatCurrency = (value) => value.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+
+        // Función principal de cálculo
+        function calculateBill(inputs) {
+            const {
+                CF_, CkWhB_, CkWhI_, CkWhP_, CkWD_, CkWC_, CENACE_, CkWhT_, SCNMEM_, FC_,
+                kWhB_, kWhI_, kWhP_, kWP_, kWMax_, kVArh_, FP_
+            } = inputs;
+
+            const Qmensual = kWhB_ + kWhI_ + kWhP_;
+            
+            // Cargo por Capacidad
+            const Dcap_ = Math.min(kWP_, Qmensual / (24 * 30 * FC_));
+            
+            // Cargo por Distribución
+            const Ddis_ = Math.min(kWMax_, Qmensual / (24 * 30 * FC_));
+
+            // Tabla de costos
+            const costos = {
+                suministro: CF_,
+                distribucion: Ddis_ * CkWD_,
+                transmision: Qmensual * CkWhT_,
+                cenace: Qmensual * CENACE_,
+                generacionB: CkWhB_ * kWhB_,
+                generacionI: CkWhI_ * kWhI_,
+                generacionP: CkWhP_ * kWhP_,
+                capacidad: Dcap_ * CkWC_,
+                scnmem: Qmensual * SCNMEM_
+            };
+
+            const Energia_ = Object.values(costos).reduce((a, b) => a + b, 0);
+
+            // Bonificación o recargo por Factor de Potencia
+            let BoniFP_ = 0;
+            let CargoFP_ = 0;
+
+            if (FP_ >= 90) {
+                const PorceFPalto_ = (1 - 90 / FP_) / 4;
+                BoniFP_ = Energia_ * PorceFPalto_;
+            } else {
+                const PorceFPbajo_ = (3/5) * (90 / FP_ - 1);
+                CargoFP_ = Energia_ * PorceFPbajo_;
+            }
+            
+            const FPCosto = BoniFP_ > 0 ? -BoniFP_ : CargoFP_;
+            
+            const Subtotal = Energia_ + FPCosto;
+            const IVA = Subtotal * 0.16;
+            const Total = Subtotal + IVA;
+
+            return {
+                Qmensual, Dcap_, Ddis_, costos, Energia_, FPCosto, Subtotal, IVA, Total
+            };
+        }
+
+        function renderResults(containerId, results, title) {
+            const container = document.getElementById(containerId);
+            const { costos, FPCosto, Subtotal, IVA, Total } = results;
+            
+            container.innerHTML = `
+                <table class="w-full text-sm mb-4">
+                    <thead>
+                        <tr><th class="text-left">Concepto</th><th class="text-right">Importe</th></tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(costos).map(([key, value]) => `<tr><td>${key.charAt(0).toUpperCase() + key.slice(1)}</td><td class="text-right">${formatCurrency(value)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+                <hr class="my-4"/>
+                <div class="results-grid">
+                     <div class="results-item">
+                        <div class="results-item-label">Energía (Suma de conceptos)</div>
+                        <div class="results-item-value">${formatCurrency(results.Energia_)}</div>
+                    </div>
+                    <div class="results-item">
+                        <div class="results-item-label">${FPCosto > 0 ? 'Cargo' : 'Bonificación'} FP</div>
+                        <div class="results-item-value ${FPCosto > 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(FPCosto)}</div>
+                    </div>
+                    <div class="results-item">
+                        <div class="results-item-label">Subtotal</div>
+                        <div class="results-item-value">${formatCurrency(Subtotal)}</div>
+                    </div>
+                    <div class="results-item">
+                        <div class="results-item-label">IVA (16%)</div>
+                        <div class="results-item-value">${formatCurrency(IVA)}</div>
+                    </div>
+                    <div class="results-item col-span-full text-center bg-blue-100">
+                        <div class="results-item-label">Total a Pagar</div>
+                        <div class="results-item-value text-blue-800 text-2xl">${formatCurrency(Total)}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateCharts(results, chartIds, inputs) {
+            const {costos} = results;
+            const {kWhB_, kWhI_, kWhP_, kWB_, kWI_, kWP_, kWMax_} = inputs;
+
+            if(consumoChart) consumoChart.destroy();
+            consumoChart = new Chart(document.getElementById(chartIds.consumo), {
+                type: 'bar',
+                data: {
+                    labels: ['Base', 'Intermedia', 'Punta'],
+                    datasets: [{ label: 'Consumo de Energía (kWh)', data: [kWhB_, kWhI_, kWhP_], backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Consumo de Energía por Periodo' }}}
+            });
+
+            if(demandaChart) demandaChart.destroy();
+            demandaChart = new Chart(document.getElementById(chartIds.demanda), {
+                type: 'bar',
+                data: {
+                    labels: ['Base', 'Intermedia', 'Punta', 'Máxima'],
+                    datasets: [{ label: 'Demanda de Potencia (kW)', data: [kWB_, kWI_, kWP_, kWMax_], backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#6b7280'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Demanda de Potencia por Periodo' }}}
+            });
+
+            if(costosChart) costosChart.destroy();
+            costosChart = new Chart(document.getElementById(chartIds.costos), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(costos),
+                    datasets: [{ label: 'Desglose de Costos', data: Object.values(costos), backgroundColor: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Desglose de Costos (Sin BESS)' }}}
+            });
+        }
+        
+        function runBessSimulation(billResults, allInputs) {
+            const peakShiftPercent = parseFloat(document.getElementById('peakShiftPercent').value) / 100;
+            const dodBess = parseFloat(document.getElementById('dodBess').value) / 100;
+            const efficiencyBess = parseFloat(document.getElementById('efficiencyBess').value) / 100;
+            const dischargeHours = parseFloat(document.getElementById('dischargeHours').value);
+
+            const energiaMensualPuntaAMover = allInputs.kWhP_ * peakShiftPercent;
+            const energiaMensualRequeridaDeCarga = energiaMensualPuntaAMover / efficiencyBess;
+
+            const simulatedConsumo = { ...allInputs };
+            simulatedConsumo.kWhP_ -= energiaMensualPuntaAMover;
+            simulatedConsumo.kWhB_ += energiaMensualRequeridaDeCarga;
+            simulatedConsumo.kWP_ *= (1 - peakShiftPercent); 
+
+            const tarifInputs = getFormValues('tarifaForm');
+            const simulatedInputs = { ...tarifInputs, ...simulatedConsumo };
+            const simulatedBillResults = calculateBill(simulatedInputs);
+            renderResults('facturaSimuladaResults', simulatedBillResults, 'Factura Simulada (Con BESS)');
+
+            const diasLaborales = 22;
+            const energiaDiariaPuntaAMover = energiaMensualPuntaAMover / diasLaborales;
+            
+            const requiredCapacityKWh = energiaDiariaPuntaAMover / dodBess;
+            const requiredPowerKW = energiaDiariaPuntaAMover / dischargeHours;
+
+            const powerFromCapacityConstraint = requiredCapacityKWh / 2;
+            const bessPowerKW = Math.max(requiredPowerKW, powerFromCapacityConstraint);
+            const bessCapacityKWh = bessPowerKW * 2;
+
+            const ahorroMensual = billResults.Total - simulatedBillResults.Total;
+            const ahorroAnual = ahorroMensual * 12;
+            const bessCostUSD = bessCapacityKWh * 300;
+            const bessCostMXN = bessCostUSD * 20;
+            const roiYears = bessCostMXN > 0 && ahorroAnual > 0 ? bessCostMXN / ahorroAnual : Infinity;
+
+            document.getElementById('comparativaResults').innerHTML = `
+                <div class="results-item"><div class="results-item-label">Ahorro Mensual Estimado</div><div class="results-item-value text-green-600">${formatCurrency(ahorroMensual)}</div></div>
+                <div class="results-item"><div class="results-item-label">Ahorro Anual Estimado</div><div class="results-item-value text-green-700">${formatCurrency(ahorroAnual)}</div></div>
+                <div class="results-item"><div class="results-item-label">BESS Propuesto (Potencia / Capacidad)</div><div class="results-item-value">${bessPowerKW.toFixed(0)} kW / ${bessCapacityKWh.toFixed(0)} kWh</div></div>
+                <div class="results-item"><div class="results-item-label">Inversión Estimada en BESS</div><div class="results-item-value">${formatCurrency(bessCostMXN)}</div></div>
+                <div class="results-item bg-blue-100"><div class="results-item-label">Retorno de Inversión (ROI)</div><div class="results-item-value text-blue-800">${roiYears === Infinity ? 'N/A' : `${roiYears.toFixed(2)} años`}</div></div>
+            `;
+
+            if(costosSimuladosChart) costosSimuladosChart.destroy();
+            costosSimuladosChart = new Chart(document.getElementById('costosSimuladosChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(simulatedBillResults.costos),
+                    datasets: [{ label: 'Desglose de Costos Simulados', data: Object.values(simulatedBillResults.costos), backgroundColor: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Desglose de Costos (Con BESS)' }}}
+            });
+
+            if(comparativaAhorrosChart) comparativaAhorrosChart.destroy();
+            comparativaAhorrosChart = new Chart(document.getElementById('comparativaAhorrosChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Factura Actual', 'Factura con BESS'],
+                    datasets: [{ label: 'Comparativa de Costo Total', data: [billResults.Total, simulatedBillResults.Total], backgroundColor: ['#ef4444', '#22c55e'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Comparativa de Facturación' }}}
+            });
+            
+            generateOperationCharts(allInputs, energiaDiariaPuntaAMover, dischargeHours);
+
+            latestResults = { billResults, simulatedBillResults, bessPowerKW, bessCapacityKWh, ahorroMensual, ahorroAnual, bessCostMXN, roiYears, inputs: allInputs };
+            document.getElementById('reportSection').classList.remove('hidden');
+        }
+
+        function handleCalculation() {
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            const tarifInputs = getFormValues('tarifaForm');
+            const consumoInputs = getFormValues('consumoForm');
+            const allInputs = { ...tarifInputs, ...consumoInputs };
+
+            const billResults = calculateBill(allInputs);
+            renderResults('facturaActualResults', billResults, 'Factura Actual (Sin BESS)');
+            updateCharts(billResults, { consumo: 'consumoChart', demanda: 'demandaChart', costos: 'costosChart' }, allInputs);
+            
+            runBessSimulation(billResults, allInputs);
+        }
+        
+        function generateOperationCharts(consumo, dailyDischarge, dischargeHours) {
+            const veranoPuntaStart = 20, veranoBaseStart = 0, veranoBaseEnd = 6;
+            const inviernoPuntaStart = 18, inviernoBaseStart = 0, inviernoBaseEnd = 6;
+            const Qmensual = consumo.kWhB_ + consumo.kWhI_ + consumo.kWhP_;
+            const avgPower = Qmensual > 0 ? Qmensual / (30 * 24) : 0;
+            const efficiency = parseFloat(document.getElementById('efficiencyBess').value) / 100;
+            const dailyCharge = dailyDischarge / efficiency;
+
+            function getProfileData(puntaStart, baseStart, baseEnd) {
+                const profile = Array(24).fill(avgPower);
+                if (dailyDischarge > 0 && dischargeHours > 0) {
+                    const dischargeRate = dailyDischarge / dischargeHours;
+                    for(let i = puntaStart; i < puntaStart + dischargeHours; i++) { if (i < 24) profile[i] -= dischargeRate; }
+                }
+                const chargeHours = baseEnd - baseStart;
+                if (dailyCharge > 0 && chargeHours > 0) {
+                    const chargeRate = dailyCharge / chargeHours;
+                    for(let i = baseStart; i < baseEnd; i++) { profile[i] += chargeRate; }
+                }
+                return {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{ label: 'Consumo de Red (kW)', data: profile, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.5)', fill: true, tension: 0.1 }]
+                };
+            }
+
+            if(operacionVeranoChart) operacionVeranoChart.destroy();
+            operacionVeranoChart = new Chart(document.getElementById('operacionVeranoChart'), {
+                type: 'line', data: getProfileData(veranoPuntaStart, veranoBaseStart, veranoBaseEnd),
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Operación BESS - Día Laboral (Verano)' }}}
+            });
+
+            if(operacionInviernoChart) operacionInviernoChart.destroy();
+            operacionInviernoChart = new Chart(document.getElementById('operacionInviernoChart'), {
+                type: 'line', data: getProfileData(inviernoPuntaStart, inviernoBaseStart, inviernoBaseEnd),
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Operación BESS - Día Laboral (Invierno)' }}}
+            });
+        }
+
+        function generateReport() {
+            if (!latestResults.billResults) {
+                alert("Por favor, primero realiza un cálculo.");
+                return;
+            }
+
+            const { billResults, simulatedBillResults, bessPowerKW, bessCapacityKWh, ahorroAnual, ahorroMensual, bessCostMXN, roiYears, inputs } = latestResults;
+            
+            const comparativaAhorrosChartImg = comparativaAhorrosChart.toBase64Image();
+            const costosChartImg = costosChart.toBase64Image();
+            const costosSimuladosChartImg = costosSimuladosChart.toBase64Image();
+            const reportDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Reporte de Simulación BESS</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; margin: 40px; }
+                    h1, h2, h3 { color: #333; }
+                    h1 { font-size: 24px; }
+                    h2 { font-size: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px;}
+                    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .summary-value { font-weight: bold; font-size: 1.1em; }
+                    .profit { color: green; }
+                    .chart-image { max-width: 500px; display: block; margin: 20px auto; }
+                </style>
+                </head>
+                <body>
+                    <h1>Reporte de Simulación de Ahorros con BESS</h1>
+                    <p>Fecha del reporte: ${reportDate}</p>
+                    <p>Simulación para el periodo: ${inputs.Mes_} ${inputs.Anio_} en ${inputs.Mpo_}, ${inputs.Edo_}</p>
+                    
+                    <h2>Resumen Ejecutivo</h2>
+                    <table>
+                        <tr><td>Factura Actual Estimada</td><td>${formatCurrency(billResults.Total)}</td></tr>
+                        <tr><td>Factura con BESS Estimada</td><td>${formatCurrency(simulatedBillResults.Total)}</td></tr>
+                        <tr><td class="summary-value">Ahorro Anual Estimado</td><td class="summary-value profit">${formatCurrency(ahorroAnual)}</td></tr>
+                    </table>
+
+                    <h2>Análisis Financiero del Proyecto BESS</h2>
+                    <table>
+                        <tr><td>BESS Propuesto (Potencia / Capacidad)</td><td>${bessPowerKW.toFixed(0)} kW / ${bessCapacityKWh.toFixed(0)} kWh</td></tr>
+                        <tr><td>Inversión Estimada (MXN)</td><td>${formatCurrency(bessCostMXN)}</td></tr>
+                        <tr><td>Ahorro Mensual (MXN)</td><td class="profit">${formatCurrency(ahorroMensual)}</td></tr>
+                        <tr><td class="summary-value">Retorno de Inversión (ROI)</td><td class="summary-value">${roiYears === Infinity ? 'N/A' : `${roiYears.toFixed(2)} años`}</td></tr>
+                    </table>
+
+                    <h2>Análisis Gráfico de Costos</h2>
+                    <h3>Comparativa de Facturación Total</h3>
+                    <img src="${comparativaAhorrosChartImg}" alt="Gráfico Comparativo de Facturación" class="chart-image">
+                    
+                    <h3>Desglose de Costos: Antes y Después del BESS</h3>
+                    <img src="${costosChartImg}" alt="Gráfico de Costos Sin BESS" class="chart-image">
+                    <img src="${costosSimuladosChartImg}" alt="Gráfico de Costos Con BESS" class="chart-image">
+
+                    <h2>Conclusión</h2>
+                    <p>La implementación de un Sistema de Almacenamiento de Energía por Baterías (BESS) presenta una oportunidad significativa para la optimización de costos energéticos. Al desplazar el consumo de energía de las horas de mayor costo (punta) a las de menor costo (base), se pueden generar ahorros sustanciales que resultan en un atractivo retorno de la inversión, además de contribuir a la estabilidad de la red y a una mayor predictibilidad en los gastos de operación.</p>
+                </body>
+                </html>`;
+
+            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(htmlContent);
+            const fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Reporte_Simulacion_BESS.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        // --- MANEJO DE DATOS Y EVENTOS ---
+        document.getElementById('calculateBtn').addEventListener('click', handleCalculation);
+        document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+        document.getElementById('recalculateBessBtn').addEventListener('click', () => {
+            if (latestResults.billResults) {
+                runBessSimulation(latestResults.billResults, latestResults.inputs);
+            } else {
+                alert("Por favor, primero realiza un cálculo inicial con el botón principal.");
+            }
+        });
+
+        const getFormValues = (formId) => {
+            const form = document.getElementById(formId);
+            const inputs = form.querySelectorAll('input');
+            const values = {};
+            inputs.forEach(input => {
+                values[input.id] = isNaN(parseFloat(input.value)) ? input.value : parseFloat(input.value);
+            });
+            return values;
+        };
+
+        const setFormValues = (formId, data) => {
+            const form = document.getElementById(formId);
+            Object.keys(data).forEach(key => {
+                const input = form.querySelector(`#${key}`);
+                if (input) {
+                    input.value = data[key];
+                }
+            });
+        };
+
+        const storageKey = 'gdmthTarifas';
+
+        function saveTarifa() {
+            const tarifas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const newTarifa = getFormValues('tarifaForm');
+            newTarifa.id = `${newTarifa.Anio_}-${newTarifa.Mes_}-${newTarifa.Mpo_}`;
+            
+            const existingIndex = tarifas.findIndex(t => t.id === newTarifa.id);
+            if (existingIndex > -1) {
+                tarifas[existingIndex] = newTarifa;
+            } else {
+                tarifas.push(newTarifa);
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(tarifas));
+            loadTarifaHistory();
+            alert('Tarifa guardada con éxito!');
+        }
+
+        function loadTarifaHistory() {
+            const tarifas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const tableBody = document.querySelector('#tarifaHistoryTable tbody');
+            tableBody.innerHTML = '';
+            tarifas.forEach(tarifa => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${tarifa.Anio_}</td>
+                    <td>${tarifa.Mes_}</td>
+                    <td>${tarifa.Edo_}</td>
+                    <td>${tarifa.Mpo_}</td>
+                    <td>
+                        <button class="text-blue-600 hover:underline" onclick="loadTarifa('${tarifa.id}')">Cargar</button>
+                        <button class="text-red-600 hover:underline ml-2" onclick="deleteTarifa('${tarifa.id}')">Borrar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        window.loadTarifa = function(id) {
+            const tarifas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const tarifaToLoad = tarifas.find(t => t.id === id);
+            if (tarifaToLoad) {
+                setFormValues('tarifaForm', tarifaToLoad);
+                alert('Tarifa cargada.');
+            }
+        }
+
+        window.deleteTarifa = function(id) {
+            if (confirm('¿Estás seguro de que quieres borrar esta tarifa?')) {
+                let tarifas = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                tarifas = tarifas.filter(t => t.id !== id);
+                localStorage.setItem(storageKey, JSON.stringify(tarifas));
+                loadTarifaHistory();
+            }
+        }
+
+        document.getElementById('saveTarifaBtn').addEventListener('click', saveTarifa);
+
+        window.addEventListener('load', () => {
+            loadTarifaHistory();
+        });
+
+    </script>
+</body>
+</html>
